@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-from xmltodict import parse
+from xmltodict import parse, unparse
 
 from cobertura_merge.types import CoverageXml
 
@@ -27,15 +27,18 @@ def main():
     )
 
     args = parser.parse_args()
+    inputs = []
     for input_file in args.input_files:
-        from pprint import pprint
-
         with open(input_file, "rb") as f:
             coverage_dict = parse(f)
             coverage = CoverageXml.parse_obj(obj=coverage_dict)
-            pprint(coverage.dict(exclude_unset=True, by_alias=True))
+            inputs.append(coverage)
 
-    print(args.output)
+    output_coverage = inputs[0]
+    output_dict = output_coverage.dict(exclude_unset=True, by_alias=True)
+
+    with open(args.output, "w") as f:
+        unparse(output_dict, output=f, pretty=True)
 
 
 if __name__ == "__main__":
