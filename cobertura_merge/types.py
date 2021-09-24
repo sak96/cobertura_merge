@@ -1,5 +1,6 @@
+from typing import List, Optional, TypeVar, Union
+
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Any, Union, TypeVar
 
 ListContent = TypeVar("ListContent")
 
