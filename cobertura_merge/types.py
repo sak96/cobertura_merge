@@ -32,7 +32,7 @@ class Line(BaseModel):
     hits: int = Field(alias="@hits")
     number: int = Field(alias="@number")
     branch: Optional[bool] = Field(alias="branch", default=None)
-    conditon_coverage: Optional[str] = Field(alias="@conditon-coverage", default=None)
+    condition_coverage: Optional[str] = Field(alias="@condition-coverage", default=None)
     conditions: Optional[ConditionXml] = None
 
 
