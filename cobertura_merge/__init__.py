@@ -1,3 +1,4 @@
+"""cobertura xml merge execution logic"""
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -7,6 +8,13 @@ from cobertura_merge.types import CoverageXml
 
 
 def main():
+    """Main Function for cobertura xml merge executable
+
+    Executable takes Following Arguments:
+        -o/--output: output file paths, defaults to "coverage.xml"
+        unnamed variable length arguments: input file paths.
+    Merges input files paths to produce output file
+    """
     parser = ArgumentParser(
         description="Utility to merge multiple cobertura xml files into one."
     )
@@ -29,16 +37,16 @@ def main():
     args = parser.parse_args()
     inputs = []
     for input_file in args.input_files:
-        with open(input_file, "rb") as f:
-            coverage_dict = parse(f)
+        with open(input_file, "rb") as input_fd:
+            coverage_dict = parse(input_fd)
             coverage = CoverageXml.parse_obj(obj=coverage_dict)
             inputs.append(coverage)
 
     output_coverage = inputs[0]
     output_dict = output_coverage.dict(exclude_unset=True, by_alias=True)
 
-    with open(args.output, "w") as f:
-        unparse(output_dict, output=f, pretty=True)
+    with open(args.output, "w", encoding="utf-8") as output_fd:
+        unparse(output_dict, output=output_fd, pretty=True)
 
 
 if __name__ == "__main__":
