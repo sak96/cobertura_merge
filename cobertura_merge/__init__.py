@@ -1,5 +1,7 @@
 """cobertura xml merge execution logic"""
 from argparse import ArgumentParser
+from functools import reduce
+from operator import add
 from pathlib import Path
 
 from xmltodict import parse, unparse
@@ -42,7 +44,7 @@ def main():
             coverage = CoverageXml.parse_obj(obj=coverage_dict)
             inputs.append(coverage)
 
-    output_coverage = inputs[0]
+    output_coverage = reduce(add, inputs)
     output_dict = output_coverage.dict(exclude_unset=True, by_alias=True)
 
     with open(args.output, "w", encoding="utf-8") as output_fd:

@@ -4,6 +4,8 @@ Spec: https://github.com/cobertura/web/blob/master/htdocs/xml/coverage-04.dtd
 
 Some amount of liberty is added by allowing optionals
 """
+from os import getcwd
+from time import time_ns
 from typing import List, Optional
 
 from pydantic import Field, validator
@@ -110,6 +112,9 @@ class PackageXml(BaseOrderedModel):
         list_validator
     )
 
+    def __add__(self, other: "PackageXml") -> "PackageXml":
+        return PackageXml(package=self.package + other.package)
+
 
 class Source(BaseOrderedModel):
     """Source of code covered"""
@@ -137,8 +142,38 @@ class Coverage(BaseOrderedModel):
     packages: PackageXml
     sources: Optional[Source] = None
 
+    def __add__(self, other: "Coverage") -> "Coverage":
+        branches_covered = self.branches_covered + other.branches_covered
+        branches_valid = self.branches_valid + other.branches_valid
+        branch_rate = (branches_covered / branches_valid) if branches_valid else 0
+
+        lines_covered = self.lines_covered + other.lines_covered
+        lines_valid = self.lines_valid + other.lines_valid
+        line_rate = (lines_covered / lines_valid) if lines_valid else 0
+
+        complexity = max(self.complexity, other.complexity)
+        version = "1.0"
+        timestamp = time_ns() // 1_000_000
+
+        return Coverage(
+            branches_covered=branches_covered,
+            branches_valid=branches_valid,
+            branch_rate=branch_rate,
+            lines_covered=lines_covered,
+            lines_valid=lines_valid,
+            line_rate=line_rate,
+            complexity=complexity,
+            version=version,
+            timestamp=timestamp,
+            sources=Source(source=[getcwd()]),
+            packages=self.packages + other.packages,
+        )
+
 
 class CoverageXml(BaseOrderedModel):
     """Coverage XML File Content"""
 
     coverage: Coverage
+
+    def __add__(self, other: "CoverageXml") -> "CoverageXml":
+        return CoverageXml(coverage=self.coverage + other.coverage)
