@@ -4,42 +4,14 @@ Spec: https://github.com/cobertura/web/blob/master/htdocs/xml/coverage-04.dtd
 
 Some amount of liberty is added by allowing optionals
 """
-from typing import List, Optional, TypeVar, Union
+from typing import List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 
-ListContent = TypeVar("ListContent")
-
-
-def list_validator(
-    input_value: Optional[Union[List[ListContent], ListContent]]
-) -> List[ListContent]:
-    """Add list validation for XML fields
-
-    xmltodict library captures list in various ways:
-        - null if nothing is provided
-        - content if only one content is provided
-        - list in other cases
-
-    To fix this list validator convert the value in to appropriate type.
-
-    Args:
-        input_value: input as extracted from xmltodict
-
-    Returns:
-        List[ListContent]: corrected list
-    """
-
-    if input_value is None:
-        output_value = []
-    elif not isinstance(input_value, list):
-        output_value = [input_value]
-    else:
-        output_value = input_value
-    return output_value
+from cobertura_merge.types_helper import BaseOrderedModel, list_validator
 
 
-class Condition(BaseModel):
+class Condition(BaseOrderedModel):
     """Condition in code covered"""
 
     number: int = Field(alias="@number")
@@ -47,7 +19,7 @@ class Condition(BaseModel):
     coverage: str = Field(alias="@coverage")
 
 
-class ConditionXml(BaseModel):
+class ConditionXml(BaseOrderedModel):
     """XML list of Conditions"""
 
     condition: List[Condition]
@@ -57,7 +29,7 @@ class ConditionXml(BaseModel):
     )
 
 
-class Line(BaseModel):
+class Line(BaseOrderedModel):
     """Line in code covered"""
 
     hits: int = Field(alias="@hits")
@@ -67,7 +39,7 @@ class Line(BaseModel):
     conditions: Optional[ConditionXml] = None
 
 
-class LineXml(BaseModel):
+class LineXml(BaseOrderedModel):
     """XML list of Lines"""
 
     line: List[Line]
@@ -77,7 +49,7 @@ class LineXml(BaseModel):
     )
 
 
-class Method(BaseModel):
+class Method(BaseOrderedModel):
     """Method in code covered"""
 
     name: str = Field(alias="@name")
@@ -87,7 +59,7 @@ class Method(BaseModel):
     complexity: Optional[float] = Field(alias="@complexity", default=None)
 
 
-class MethodXml(BaseModel):
+class MethodXml(BaseOrderedModel):
     """XML list of Methods"""
 
     method: List[Method]
@@ -97,7 +69,7 @@ class MethodXml(BaseModel):
     )
 
 
-class Class(BaseModel):
+class Class(BaseOrderedModel):
     """Class in code covered"""
 
     name: str = Field(alias="@name")
@@ -109,7 +81,7 @@ class Class(BaseModel):
     lines: Optional[LineXml] = None
 
 
-class ClassXml(BaseModel):
+class ClassXml(BaseOrderedModel):
     """XML list of Classes"""
 
     class_: List[Class] = Field(alias="class")
@@ -119,7 +91,7 @@ class ClassXml(BaseModel):
     )
 
 
-class Package(BaseModel):
+class Package(BaseOrderedModel):
     """Package in code covered"""
 
     name: str = Field(alias="@name")
@@ -129,7 +101,7 @@ class Package(BaseModel):
     classes: Optional[ClassXml] = None
 
 
-class PackageXml(BaseModel):
+class PackageXml(BaseOrderedModel):
     """XML list of Packages"""
 
     package: List[Package]
@@ -139,7 +111,7 @@ class PackageXml(BaseModel):
     )
 
 
-class Source(BaseModel):
+class Source(BaseOrderedModel):
     """Source of code covered"""
 
     source: list[str]
@@ -149,7 +121,7 @@ class Source(BaseModel):
     )
 
 
-class Coverage(BaseModel):
+class Coverage(BaseOrderedModel):
     """Coverage of code"""
 
     line_rate: float = Field(alias="@line-rate")
@@ -166,7 +138,7 @@ class Coverage(BaseModel):
     sources: Optional[Source] = None
 
 
-class CoverageXml(BaseModel):
+class CoverageXml(BaseOrderedModel):
     """Coverage XML File Content"""
 
     coverage: Coverage
