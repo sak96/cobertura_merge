@@ -23,7 +23,7 @@ optional arguments:
 
 ## Road Map
 
-- [ ] Fix working directory.
+- [x] Fix working directory.
 - [ ] Add pre commit hooks.
 - [ ] Add test cases.
 - [ ] Add build pipeline.

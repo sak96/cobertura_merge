@@ -4,7 +4,7 @@ Spec: https://github.com/cobertura/web/blob/master/htdocs/xml/coverage-04.dtd
 
 Some amount of liberty is added by allowing optionals
 """
-from os import getcwd
+from pathlib import Path
 from time import time_ns
 from typing import List, Optional
 
@@ -82,6 +82,25 @@ class Class(BaseOrderedModel):
     methods: Optional[MethodXml] = None
     lines: Optional[LineXml] = None
 
+    def rewrite_base_dir(self, source_dir: str) -> "Class":
+        """Rewrite the base directory of the class
+
+        Class base directory is rewritten relative to current working directory.
+
+        Args:
+            source_dir: the directory of the class as in package
+
+        Returns:
+            "Class": Class with fixed base dir
+        """
+        return self.copy(
+            update={
+                "@filename": str(
+                    Path.cwd().relative_to(Path(source_dir).joinpath(self.filename))
+                )
+            }
+        )
+
 
 class ClassXml(BaseOrderedModel):
     """XML list of Classes"""
@@ -101,6 +120,34 @@ class Package(BaseOrderedModel):
     branch_rate: float = Field(alias="@branch-rate")
     complexity: Optional[float] = Field(alias="@complexity", default=None)
     classes: Optional[ClassXml] = None
+
+    def fix_base_dir(self, source_dir: str) -> "Package":
+        """Fix base directory in package.
+
+        Package has classes which are fixed with proper directory.
+
+        Args:
+            source_dir: the directory of the class as in package
+
+        Returns:
+            "Package": Package with fixed base directory
+        """
+        if self.classes and self.classes.class_:
+            return self.copy(
+                update={
+                    "classes": ClassXml(
+                        **{
+                            "class": list(
+                                map(
+                                    lambda cls_: cls_.rewrite_base_dir(source_dir),
+                                    self.classes.class_,
+                                )
+                            )
+                        }
+                    )
+                }
+            )
+        return self.copy()
 
 
 class PackageXml(BaseOrderedModel):
@@ -155,6 +202,10 @@ class Coverage(BaseOrderedModel):
         version = "1.0"
         timestamp = time_ns() // 1_000_000
 
+        package_xml = PackageXml(
+            **{"package": self._get_fixed_packages() + other._get_fixed_packages()}
+        )
+
         return Coverage(
             branches_covered=branches_covered,
             branches_valid=branches_valid,
@@ -165,9 +216,17 @@ class Coverage(BaseOrderedModel):
             complexity=complexity,
             version=version,
             timestamp=timestamp,
-            sources=Source(source=[getcwd()]),
-            packages=self.packages + other.packages,
+            sources=Source(source=[Path.cwd()]),
+            packages=package_xml,
         )
+
+    def _get_fixed_packages(self) -> List[Package]:
+        if self.sources and self.sources.source:
+            return [
+                pkg.fix_base_dir(self.sources.source[0])
+                for pkg in self.packages.package
+            ]
+        return self.packages.package
 
 
 class CoverageXml(BaseOrderedModel):
