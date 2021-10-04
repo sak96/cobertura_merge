@@ -28,3 +28,16 @@ optional arguments:
 - [ ] Add test cases.
 - [ ] Add build pipeline.
 - [ ] Publish to pypi via release pipeline ?
+
+## Contribution
+
+1. Setup
+  ```bash
+  pip install -e '.[dev]'
+  ```
+2. Do the changes
+3. Run static check
+  ```bash
+  nox
+  ```
+4. Fix errors
