@@ -34,6 +34,7 @@ optional arguments:
 1. Setup
   ```bash
   pip install -e '.[dev]'
+  pre-commit install
   ```
 2. Do the changes
 3. Run static check
