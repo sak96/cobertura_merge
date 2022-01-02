@@ -4,11 +4,14 @@ Spec: https://github.com/cobertura/web/blob/master/htdocs/xml/coverage-04.dtd
 
 Some amount of liberty is added by allowing optionals
 """
+from functools import reduce
+from operator import add
 from pathlib import Path
 from time import time_ns
 from typing import List, Optional
 
 from pydantic import Field, validator
+from xmltodict import parse, unparse
 
 from cobertura_merge.types_helper import BaseOrderedModel, list_validator
 
@@ -236,3 +239,39 @@ class CoverageXml(BaseOrderedModel):
 
     def __add__(self, other: "CoverageXml") -> "CoverageXml":
         return CoverageXml(coverage=self.coverage + other.coverage)
+
+    @staticmethod
+    def read_from_file(input_file: Path) -> "CoverageXml":
+        """Read coverage from file.
+
+        Args:
+            input_file: coverage xml as Path object.
+
+        Returns:
+            "CoverageXml": Coverage object.
+        """
+        with open(input_file, "rb") as input_fd:
+            coverage_dict = parse(input_fd)
+            return CoverageXml.parse_obj(obj=coverage_dict)
+
+    @staticmethod
+    def merge(coverages: List["CoverageXml"]) -> "CoverageXml":
+        """Merge given coverages return merged coverages.
+
+        Args:
+            coverages: coverage to be merged.
+
+        Returns:
+            CoverageXml: Merged output CoverageXml
+        """
+        return reduce(add, coverages)
+
+    def output_to_file(self, output_file: Path):
+        """Output coverage to output file.
+
+        Args:
+            output_file: output file as Path object.
+        """
+        output_dict = self.dict(exclude_unset=True, by_alias=True)
+        with open(output_file, "w", encoding="utf-8") as output_fd:
+            unparse(output_dict, output=output_fd, pretty=True)

@@ -1,10 +1,6 @@
 """cobertura xml merge execution logic"""
 from argparse import ArgumentParser
-from functools import reduce
-from operator import add
 from pathlib import Path
-
-from xmltodict import parse, unparse
 
 from cobertura_merge.types import CoverageXml
 
@@ -37,18 +33,9 @@ def main():
     )
 
     args = parser.parse_args()
-    inputs = []
-    for input_file in args.input_files:
-        with open(input_file, "rb") as input_fd:
-            coverage_dict = parse(input_fd)
-            coverage = CoverageXml.parse_obj(obj=coverage_dict)
-            inputs.append(coverage)
-
-    output_coverage = reduce(add, inputs)
-    output_dict = output_coverage.dict(exclude_unset=True, by_alias=True)
-
-    with open(args.output, "w", encoding="utf-8") as output_fd:
-        unparse(output_dict, output=output_fd, pretty=True)
+    inputs = map(CoverageXml.read_from_file, args.input_files)
+    output_coverage = CoverageXml.merge(list(inputs))
+    output_coverage.output_to_file(args.output)
 
 
 if __name__ == "__main__":
