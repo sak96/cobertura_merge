@@ -38,7 +38,8 @@ def outdated(session):
     session.install(".")
     exclude_args = sum((["--exclude", pkg] for pkg in ALLOWED_OUTDATED_PACKAGES), [])
     output = check_output(
-        ["pip", "list", "--outdated", "--format", "freeze"] + exclude_args
+        ["pip", "list", "--outdated", "--format", "freeze"] + exclude_args,
+        env=session.env
     )
     if output.strip():
         raise Exception(output.decode())
